@@ -234,10 +234,10 @@ module Jekyll
       hash = Hash.new { |h, key| h[key] = [] }
       posts.docs.each do |p|
         attr_value = p.data[post_attr]
-        if attr_value.respond_to? :each 
+        if attr_value.respond_to? :each
           attr_value.each { |t| hash[t] << p }
         elsif !attr_value.nil?
-          hash[attr_value] << p            
+          hash[attr_value] << p
         end
       end
       hash.values.each { |posts| posts.sort!.reverse! }
