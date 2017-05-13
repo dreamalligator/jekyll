@@ -29,7 +29,7 @@ class TestFilters < JekyllUnitTest
       @filter = make_filter_mock({
         "timezone" => "UTC",
         "url"      => "http://example.com",
-        "baseurl"  => "/base"
+        "baseurl"  => "/base",
       })
       @sample_time = Time.utc(2013, 3, 27, 11, 22, 33)
       @sample_date = Date.parse("2013-03-27")
@@ -39,7 +39,7 @@ class TestFilters < JekyllUnitTest
       @array_of_objects = [
         { "color" => "red",  "size" => "large"  },
         { "color" => "red",  "size" => "medium" },
-        { "color" => "blue", "size" => "medium" }
+        { "color" => "blue", "size" => "medium" },
       ]
     end
 
@@ -284,11 +284,9 @@ class TestFilters < JekyllUnitTest
       end
 
       context "without input" do
-        should "raise an error if input is nil" do
-          err = assert_raises Jekyll::Errors::InvalidDateError do
-            @filter.date_to_xmlschema(nil)
-          end
-          assert_equal "Invalid Date: 'nil' is not a valid datetime.", err.message
+        should "return input" do
+          assert_nil(@filter.date_to_xmlschema(nil))
+          assert_equal("", @filter.date_to_xmlschema(""))
         end
       end
     end
@@ -317,6 +315,11 @@ class TestFilters < JekyllUnitTest
       assert_equal "my%20things", @filter.uri_escape("my things")
     end
 
+    should "allow colons in URI" do
+      assert_equal "foo:bar", @filter.uri_escape("foo:bar")
+      assert_equal "foo%20bar:baz", @filter.uri_escape("foo bar:baz")
+    end
+
     context "absolute_url filter" do
       should "produce an absolute URL from a page URL" do
         page_url = "/about/my_favorite_page/"
@@ -332,7 +335,7 @@ class TestFilters < JekyllUnitTest
         page_url = "about/my_favorite_page/"
         filter = make_filter_mock({
           "url"     => "http://example.com",
-          "baseurl" => "base"
+          "baseurl" => "base",
         })
         assert_equal "http://example.com/base/#{page_url}", filter.absolute_url(page_url)
       end
@@ -341,7 +344,7 @@ class TestFilters < JekyllUnitTest
         page_url = "about/my_favorite_page/"
         filter = make_filter_mock({
           "url"     => "",
-          "baseurl" => "base"
+          "baseurl" => "base",
         })
         assert_equal "/base/#{page_url}", filter.absolute_url(page_url)
       end
@@ -350,7 +353,7 @@ class TestFilters < JekyllUnitTest
         page_url = "about/my_favorite_page/"
         filter = make_filter_mock({
           "url"     => nil,
-          "baseurl" => "base"
+          "baseurl" => "base",
         })
         assert_equal "/base/#{page_url}", filter.absolute_url(page_url)
       end
@@ -359,7 +362,7 @@ class TestFilters < JekyllUnitTest
         page_url = "about/my_favorite_page/"
         filter = make_filter_mock({
           "url"     => "http://example.com",
-          "baseurl" => nil
+          "baseurl" => nil,
         })
         assert_equal "http://example.com/#{page_url}", filter.absolute_url(page_url)
       end
@@ -368,18 +371,41 @@ class TestFilters < JekyllUnitTest
         page_url = ""
         filter = make_filter_mock({
           "url"     => "http://example.com",
-          "baseurl" => "/base"
+          "baseurl" => "/base",
         })
         assert_equal "http://example.com/base", filter.absolute_url(page_url)
+      end
+
+      should "not append a forward slash if input is '/'" do
+        page_url = "/"
+        filter = make_filter_mock({
+          "url"     => "http://example.com",
+          "baseurl" => "/base",
+        })
+        assert_equal "http://example.com/base/", filter.absolute_url(page_url)
+      end
+
+      should "not append a forward slash if input is '/' and nil 'baseurl'" do
+        page_url = "/"
+        filter = make_filter_mock({
+          "url"     => "http://example.com",
+          "baseurl" => nil,
+        })
+        assert_equal "http://example.com/", filter.absolute_url(page_url)
       end
 
       should "normalize international URLs" do
         page_url = ""
         filter = make_filter_mock({
           "url"     => "http://ümlaut.example.org/",
-          "baseurl" => nil
+          "baseurl" => nil,
         })
         assert_equal "http://xn--mlaut-jva.example.org/", filter.absolute_url(page_url)
+      end
+
+      should "not modify an absolute URL" do
+        page_url = "http://example.com/"
+        assert_equal "http://example.com/", @filter.absolute_url(page_url)
       end
     end
 
@@ -409,7 +435,7 @@ class TestFilters < JekyllUnitTest
         page_url = "about/my_favorite_page/"
         filter = make_filter_mock({
           "url"     => "http://example.com",
-          "baseurl" => nil
+          "baseurl" => nil,
         })
         assert_equal "/#{page_url}", filter.relative_url(page_url)
       end
@@ -418,7 +444,7 @@ class TestFilters < JekyllUnitTest
         page_url = ""
         filter = make_filter_mock({
           "url"     => "http://example.com",
-          "baseurl" => "/base"
+          "baseurl" => "/base",
         })
         assert_equal "/base", filter.relative_url(page_url)
       end
@@ -451,7 +477,7 @@ class TestFilters < JekyllUnitTest
           "excerpt"       => "<p>This should be published.</p>\n",
           "draft"         => false,
           "categories"    => [
-            "publish_test"
+            "publish_test",
           ],
           "layout"        => "default",
           "title"         => "Publish",
@@ -459,7 +485,7 @@ class TestFilters < JekyllUnitTest
           "date"          => "2008-02-02 00:00:00 +0000",
           "slug"          => "published",
           "ext"           => ".markdown",
-          "tags"          => []
+          "tags"          => [],
         }
         actual = JSON.parse(@filter.jsonify(@filter.site.docs_to_write.first.to_liquid))
 
@@ -475,7 +501,7 @@ class TestFilters < JekyllUnitTest
         actual = @filter.jsonify(@filter.site.to_liquid)
         assert_equal JSON.parse(actual)["jekyll"], {
           "environment" => "development",
-          "version"     => Jekyll::VERSION
+          "version"     => Jekyll::VERSION,
         }
       end
 
@@ -491,7 +517,7 @@ class TestFilters < JekyllUnitTest
             "name" => name,
             :v     => 1,
             :thing => M.new({ :kay => "jewelers" }),
-            :stuff => true
+            :stuff => true,
           }
         end
       end
@@ -503,21 +529,21 @@ class TestFilters < JekyllUnitTest
             "v"     => 1,
             "thing" => [
               {
-                "kay" => "jewelers"
-              }
+                "kay" => "jewelers",
+              },
             ],
-            "stuff" => true
+            "stuff" => true,
           },
           {
             "name"  => "Smathers",
             "v"     => 1,
             "thing" => [
               {
-                "kay" => "jewelers"
-              }
+                "kay" => "jewelers",
+              },
             ],
-            "stuff" => true
-          }
+            "stuff" => true,
+          },
         ]
         result = @filter.jsonify([T.new("Jeremiah"), T.new("Smathers")])
         assert_equal expected, JSON.parse(result)
@@ -533,32 +559,32 @@ class TestFilters < JekyllUnitTest
               "v"     => 1,
               "thing" => [
                 {
-                  "kay" => "jewelers"
-                }
+                  "kay" => "jewelers",
+                },
               ],
-              "stuff" => true
+              "stuff" => true,
             },
             {
               "name"  => 1,
               "v"     => 1,
               "thing" => [
                 {
-                  "kay" => "jewelers"
-                }
+                  "kay" => "jewelers",
+                },
               ],
-              "stuff" => true
+              "stuff" => true,
             },
             {
               "name"  => 2,
               "v"     => 1,
               "thing" => [
                 {
-                  "kay" => "jewelers"
-                }
+                  "kay" => "jewelers",
+                },
               ],
-              "stuff" => true
-            }
-          ]
+              "stuff" => true,
+            },
+          ],
         }
         result = @filter.jsonify(my_hash)
         assert_equal expected, JSON.parse(result)
@@ -633,7 +659,7 @@ class TestFilters < JekyllUnitTest
         hash = {
           "a" => { "tags"=>%w(x y) },
           "b" => { "tags"=>["x"] },
-          "c" => { "tags"=>%w(y z) }
+          "c" => { "tags"=>%w(y z) },
         }
         assert_equal 2, @filter.where(hash, "tags", "x").length
       end
@@ -642,7 +668,7 @@ class TestFilters < JekyllUnitTest
         hash = {
           "a" => { "tags"=>%w(x y) },
           "b" => { "tags"=>"x" },
-          "c" => { "tags"=>%w(y z) }
+          "c" => { "tags"=>%w(y z) },
         }
         assert_equal 2, @filter.where(hash, "tags", "x").length
       end
@@ -651,7 +677,7 @@ class TestFilters < JekyllUnitTest
         hash = {
           "a" => { "category"=>"bear" },
           "b" => { "category"=>"wolf" },
-          "c" => { "category"=>%w(bear lion) }
+          "c" => { "category"=>%w(bear lion) },
         }
         assert_equal 0, @filter.where(hash, "category", "ear").length
       end
@@ -660,7 +686,7 @@ class TestFilters < JekyllUnitTest
         hash = {
           "The Words" => { "rating" => 1.2, "featured" => false },
           "Limitless" => { "rating" => 9.2, "featured" => true },
-          "Hustle"    => { "rating" => 4.7, "featured" => true }
+          "Hustle"    => { "rating" => 4.7, "featured" => true },
         }
 
         results = @filter.where(hash, "featured", "true")
@@ -704,7 +730,7 @@ class TestFilters < JekyllUnitTest
         hash = {
           "The Words" => { "rating" => 1.2, "featured" => false },
           "Limitless" => { "rating" => 9.2, "featured" => true },
-          "Hustle"    => { "rating" => 4.7, "featured" => true }
+          "Hustle"    => { "rating" => 4.7, "featured" => true },
         }
 
         results = @filter.where_exp(hash, "item", "item.featured == true")
@@ -725,7 +751,7 @@ class TestFilters < JekyllUnitTest
         { "id" => "a", "groups" => [1, 2] },
         { "id" => "b", "groups" => [2, 3] },
         { "id" => "c" },
-        { "id" => "d", "groups" => [1, 3] }
+        { "id" => "d", "groups" => [1, 3] },
       ]
       should "filter with the contains operator over arrays" do
         results = @filter.where_exp(objects, "obj", "obj.groups contains 1")
@@ -807,7 +833,7 @@ class TestFilters < JekyllUnitTest
         items = [
           { "version"=>"1.0", "result"=>"slow" },
           { "version"=>"1.1.5", "result"=>"medium" },
-          { "version"=>"2.7.3", "result"=>"fast" }
+          { "version"=>"2.7.3", "result"=>"fast" },
         ]
 
         result = @filter.group_by_exp(items, "item", "item.version | split: '.' | first")
